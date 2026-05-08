@@ -36,30 +36,40 @@ export function useBlogList(query: BlogListQuery = {}) {
   });
 }
 
-// GET /api/blog/:slug
+// GET /api/blog/:slug — BE returns flat BlogPost with contentHtml
 export function useBlogPost(slug: string | undefined) {
   return useQuery({
     queryKey: KEYS.detail(slug ?? ""),
     enabled: !!slug,
-    queryFn: () => api.get<BlogPost & { content: string; contentHtml: string }>(`/api/blog/${slug}`),
+    queryFn: () => api.get<BlogPost & { contentHtml: string }>(`/api/blog/${slug}`),
   });
 }
 
-// POST /api/admin/blog
+// GET /api/admin/blog/:id — fetch by id via the slug detail endpoint is not supported
+// We use the list endpoint to find the post by id for the edit page
+export function useBlogPostById(id: string | undefined) {
+  const listQ = useBlogList({ limit: 100 });
+  return {
+    ...listQ,
+    post: listQ.data?.items.find((p) => p.id === id),
+  };
+}
+
+// POST /api/admin/blog — BE returns flat BlogPost (not {post: BlogPost})
 export function useAdminCreateBlog() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: CreateBlogDto) => api.post<{ post: BlogPost }>("/api/admin/blog", body),
+    mutationFn: (body: CreateBlogDto) => api.post<BlogPost>("/api/admin/blog", body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["blog"] }),
   });
 }
 
-// PATCH /api/admin/blog/:id
+// PATCH /api/admin/blog/:id — BE returns flat BlogPost
 export function useAdminUpdateBlog() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: Partial<Omit<CreateBlogDto, "slug">> }) =>
-      api.patch<{ post: BlogPost }>(`/api/admin/blog/${id}`, body),
+      api.patch<BlogPost>(`/api/admin/blog/${id}`, body),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["blog"] }),
   });
 }

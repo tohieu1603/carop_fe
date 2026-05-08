@@ -15,12 +15,12 @@ const KEYS = {
   adminByListing: (listingId: string, q: OffersPageQuery) => ["admin", "offers", listingId, q] as const,
 };
 
-// POST /api/listings/:id/offers
+// POST /api/listings/:id/offers — need to verify but likely flat Offer
 export function useCreateOffer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ listingId, amount, message }: { listingId: string; amount: number; message?: string }) =>
-      api.post<{ offer: Offer }>(`/api/listings/${listingId}/offers`, { amount, message }),
+      api.post<Offer>(`/api/listings/${listingId}/offers`, { amount, message }),
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: ["offers"] });
       qc.invalidateQueries({ queryKey: ["listings", "detail", v.listingId] });
@@ -49,11 +49,11 @@ export function useMyOffers(query: OffersPageQuery = {}) {
   });
 }
 
-// POST /api/offers/:id/withdraw
+// POST /api/offers/:id/withdraw — BE returns flat {id, status}
 export function useWithdrawOffer() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: string }) => api.post<{ offer: Offer }>(`/api/offers/${id}/withdraw`),
+    mutationFn: ({ id }: { id: string }) => api.post<{ id: string; status: string }>(`/api/offers/${id}/withdraw`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["offers"] }),
   });
 }
@@ -71,26 +71,30 @@ export function useAdminListingOffers(listingId: string | undefined, query: Offe
   });
 }
 
-// POST /api/admin/offers/:id/accept
+// POST /api/admin/offers/:id/accept — BE returns flat {id, status, listingId, listingStatus, rejectedCount}
 export function useAcceptOffer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) =>
-      api.post<{ offer: Offer; transaction: Transaction }>(`/api/admin/offers/${id}/accept`, { note }),
+      api.post<{ id: string; status: string; listingId: string; listingStatus: string; rejectedCount: number }>(`/api/admin/offers/${id}/accept`, { note }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["offers"] });
       qc.invalidateQueries({ queryKey: ["transactions"] });
       qc.invalidateQueries({ queryKey: ["admin"] });
+      qc.invalidateQueries({ queryKey: ["listings"] });
     },
   });
 }
 
-// POST /api/admin/offers/:id/reject
+// POST /api/admin/offers/:id/reject — BE returns flat {id, status} (not {offer: Offer})
 export function useRejectOffer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, reason }: { id: string; reason: string }) =>
-      api.post<{ offer: Offer }>(`/api/admin/offers/${id}/reject`, { reason }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["offers"] }),
+      api.post<{ id: string; status: string }>(`/api/admin/offers/${id}/reject`, { reason }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["offers"] });
+      qc.invalidateQueries({ queryKey: ["admin"] });
+    },
   });
 }

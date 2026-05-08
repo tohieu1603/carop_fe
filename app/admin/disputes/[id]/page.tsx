@@ -75,21 +75,21 @@ function DisputeDetail({ dispute }: { dispute: Dispute }) {
             <div style={{ color: "var(--ink-500)", fontSize: 13 }}>Dang tai...</div>
           ) : txn.data ? (
             <>
-              <Row label="ID" value={txn.data.transaction.id} mono />
+              <Row label="ID" value={txn.data.id} mono />
               <Row label="Listing" value={
-                <Link href={`/admin/listings/${txn.data.transaction.listingId}`} style={{ color: "var(--green-700)" }}>
-                  {txn.data.transaction.listingId}
+                <Link href={`/admin/listings/${txn.data.listingId}`} style={{ color: "var(--green-700)" }}>
+                  {txn.data.listingId}
                 </Link>
               } />
-              <Row label="Gia chot" value={formatVNDShort(txn.data.transaction.finalPrice)} />
-              <Row label="Phi" value={formatVNDShort(txn.data.transaction.commission)} />
+              <Row label="Gia chot" value={formatVNDShort(txn.data.finalPrice)} />
+              <Row label="Phi" value={formatVNDShort(txn.data.commission)} />
               <Row label="Trang thai" value={
-                <span className={`badge badge-${txn.data.transaction.status === "BALANCE_HELD" ? "amber" : txn.data.transaction.status === "PAID_OUT" ? "green" : "red"}`}>
-                  {txn.data.transaction.status}
+                <span className={`badge badge-${txn.data.status === "BALANCE_HELD" ? "amber" : txn.data.status === "PAID_OUT" ? "green" : "red"}`}>
+                  {txn.data.status}
                 </span>
               } />
-              <Row label="Buyer ID" value={txn.data.transaction.buyerId} mono />
-              <Row label="Seller ID" value={txn.data.transaction.sellerId} mono />
+              <Row label="Buyer ID" value={txn.data.buyerId} mono />
+              <Row label="Seller ID" value={txn.data.sellerId} mono />
             </>
           ) : (
             <div style={{ color: "var(--ink-400)", fontSize: 13 }}>Khong co thong tin giao dich.</div>

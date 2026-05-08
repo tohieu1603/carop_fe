@@ -88,7 +88,7 @@ export default function NewListingPage() {
               warranty: v.warranty || undefined,
               imageKeys,
             });
-            router.push(`/dashboard/listings/${created.listing.id}`);
+            router.push(`/dashboard/listings/${created.id}`);
           } catch (e) {
             const msg = e instanceof ApiError ? e.message : "Lỗi tạo tin";
             form.setError("vin", { message: msg });

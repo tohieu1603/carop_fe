@@ -20,7 +20,7 @@ export function useAdminDisputes(query: AdminDisputesQuery = {}) {
   });
 }
 
-// POST /api/admin/disputes/:id/resolve
+// POST /api/admin/disputes/:id/resolve — BE returns flat {id, status}
 export function useResolveDispute() {
   const qc = useQueryClient();
   return useMutation({
@@ -35,7 +35,7 @@ export function useResolveDispute() {
       splitPct?: number;
       rationale: string;
     }) =>
-      api.post<{ dispute: Dispute; transaction: Transaction }>(`/api/admin/disputes/${id}/resolve`, {
+      api.post<{ id: string; status: string }>(`/api/admin/disputes/${id}/resolve`, {
         decision,
         splitPct,
         rationale,

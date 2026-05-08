@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { PageHeader } from "@/components/dashboard/PageHeader";
 import { RequireRole } from "@/components/RequireRole";
-import { useAdminUpdateBlog, useBlogPost } from "@/hooks/api/blog";
+import { useAdminUpdateBlog, useBlogPostById } from "@/hooks/api/blog";
 import { ApiError } from "@/lib/api/client";
 
 const schema = z.object({
@@ -33,13 +33,29 @@ export default function EditBlogPage({ params }: { params: Promise<{ id: string 
 function Inner({ id }: { id: string }) {
   const router = useRouter();
   const update = useAdminUpdateBlog();
-  // We need to get the post by id — but useBlogPost takes slug.
-  // We'll store the id in the form as a workaround, and load via the list route.
+  const { post, isLoading } = useBlogPostById(id);
   const form = useForm<Form>({ resolver: zodResolver(schema), defaultValues: { title: "", content: "" } });
+
+  useEffect(() => {
+    if (post) {
+      form.reset({
+        title: post.title,
+        content: post.content,
+        excerpt: post.excerpt || "",
+        category: post.category || "",
+        coverKey: post.coverKey || "",
+        featured: post.featured,
+        published: !!post.publishedAt,
+      });
+    }
+  }, [post, form]);
+
+  if (isLoading) return <div style={{ padding: 32, color: "var(--ink-500)" }}>Đang tải…</div>;
+  if (!post) return <div style={{ padding: 32, color: "var(--red-600)" }}>Không tìm thấy bài viết.</div>;
 
   return (
     <>
-      <PageHeader title={`Chỉnh sửa bài viết #${id}`} />
+      <PageHeader title={`Chỉnh sửa: ${post.title}`} />
       <form
         onSubmit={form.handleSubmit(async (v) => {
           try {

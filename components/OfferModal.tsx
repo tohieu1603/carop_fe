@@ -44,7 +44,7 @@ export function OfferModal() {
         amount: offer,
         message: message || undefined,
       });
-      setSubmittedOfferId(res.offer.id);
+      setSubmittedOfferId(res.id);
       setStep(3);
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : "Lỗi gửi offer";

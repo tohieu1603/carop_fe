@@ -27,7 +27,7 @@ type PwForm = z.infer<typeof pwSchema>;
 
 export default function ProfilePage() {
   const me = useUserMe();
-  const user = me.data?.user;
+  const user = me.data;
   const [tab, setTab] = useState<"profile" | "password" | "kyc">("profile");
 
   return (
@@ -64,7 +64,7 @@ function ProfileTab() {
   const form = useForm<ProfileForm>({ resolver: zodResolver(profileSchema), defaultValues: { fullName: "", email: "" } });
 
   useEffect(() => {
-    if (me.data?.user) form.reset({ fullName: me.data.user.fullName, email: me.data.user.email || "" });
+    if (me.data) form.reset({ fullName: me.data.fullName, email: me.data.email || "" });
   }, [me.data, form]);
 
   return (
@@ -184,7 +184,7 @@ function PasswordTab() {
 
 function KycTab() {
   const me = useUserMe();
-  const user = me.data?.user;
+  const user = me.data;
   const submitKyc = useSubmitKyc();
   const signUpload = useSignUpload();
   const authUser = useAuth((s) => s.user);

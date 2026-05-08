@@ -101,23 +101,23 @@ export function useListingInspection(id: string | undefined) {
   });
 }
 
-// POST /api/listings
+// POST /api/listings — BE returns flat Listing
 export function useCreateListing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: CreateListingDto) => api.post<{ listing: Listing }>("/api/listings", body),
+    mutationFn: (body: CreateListingDto) => api.post<Listing>("/api/listings", body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["listings"] });
     },
   });
 }
 
-// PATCH /api/listings/:id
+// PATCH /api/listings/:id — BE returns flat Listing (partial fields)
 export function useUpdateListing() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, body }: { id: string; body: UpdateListingDto }) =>
-      api.patch<{ listing: Listing }>(`/api/listings/${id}`, body),
+      api.patch<Listing>(`/api/listings/${id}`, body),
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: KEYS.detail(vars.id) });
       qc.invalidateQueries({ queryKey: ["listings"] });
@@ -125,11 +125,11 @@ export function useUpdateListing() {
   });
 }
 
-// POST /api/listings/:id/hide
+// POST /api/listings/:id/hide — BE returns flat {id, status}
 export function useHideListing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: string }) => api.post<{ listing: Listing }>(`/api/listings/${id}/hide`),
+    mutationFn: ({ id }: { id: string }) => api.post<{ id: string; status: string }>(`/api/listings/${id}/hide`),
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: KEYS.detail(v.id) });
       qc.invalidateQueries({ queryKey: ["listings"] });
@@ -137,11 +137,11 @@ export function useHideListing() {
   });
 }
 
-// POST /api/listings/:id/unhide
+// POST /api/listings/:id/unhide — BE returns flat {id, status}
 export function useUnhideListing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: string }) => api.post<{ listing: Listing }>(`/api/listings/${id}/unhide`),
+    mutationFn: ({ id }: { id: string }) => api.post<{ id: string; status: string }>(`/api/listings/${id}/unhide`),
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: KEYS.detail(v.id) });
       qc.invalidateQueries({ queryKey: ["listings"] });
@@ -157,11 +157,11 @@ export function useMyListings(query: MyListingsQuery = {}) {
   });
 }
 
-// POST /api/admin/listings/:id/approve
+// POST /api/admin/listings/:id/approve — BE returns flat Listing
 export function useApproveListing() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: string }) => api.post<{ listing: Listing }>(`/api/admin/listings/${id}/approve`),
+    mutationFn: ({ id }: { id: string }) => api.post<Listing>(`/api/admin/listings/${id}/approve`),
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: KEYS.detail(v.id) });
       qc.invalidateQueries({ queryKey: ["admin", "listings"] });
@@ -170,12 +170,12 @@ export function useApproveListing() {
   });
 }
 
-// POST /api/admin/listings/:id/sold
+// POST /api/admin/listings/:id/sold — BE returns flat Listing
 export function useMarkListingSold() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, finalPrice }: { id: string; finalPrice: number }) =>
-      api.post<{ listing: Listing }>(`/api/admin/listings/${id}/sold`, { finalPrice }),
+      api.post<Listing>(`/api/admin/listings/${id}/sold`, { finalPrice }),
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: KEYS.detail(v.id) });
       qc.invalidateQueries({ queryKey: ["admin", "listings"] });

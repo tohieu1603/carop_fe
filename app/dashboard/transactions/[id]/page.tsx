@@ -29,7 +29,7 @@ export default function TransactionDetailPage() {
   const [reason, setReason] = useState("");
 
   if (isLoading) return <div>Đang tải…</div>;
-  const t = data?.transaction;
+  const t = data;
   if (!t) return <div>Không tìm thấy giao dịch.</div>;
 
   const isBuyer = user?.id === t.buyerId;
@@ -51,7 +51,7 @@ export default function TransactionDetailPage() {
                 onClick={async () => {
                   try {
                     const res = await pay.mutateAsync({ id });
-                    if (res.payment.payUrl) window.location.href = res.payment.payUrl;
+                    if (res.redirectUrl) window.location.href = res.redirectUrl;
                   } catch (e) {
                     alert(e instanceof ApiError ? e.message : "Lỗi");
                   }

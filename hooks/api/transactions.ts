@@ -22,21 +22,21 @@ const KEYS = {
   admin: (q: AdminTxnQuery) => ["admin", "transactions", q] as const,
 };
 
-// GET /api/transactions/:id
+// GET /api/transactions/:id — BE returns flat Transaction (not {transaction: Transaction})
 export function useTransaction(id: string | undefined) {
   return useQuery({
     queryKey: KEYS.detail(id ?? ""),
     enabled: !!id,
-    queryFn: () => api.get<{ transaction: Transaction }>(`/api/transactions/${id}`),
+    queryFn: () => api.get<Transaction>(`/api/transactions/${id}`),
   });
 }
 
-// POST /api/transactions/:id/pay-balance
+// POST /api/transactions/:id/pay-balance — BE returns {transactionId, amount, redirectUrl, replayed}
 export function usePayBalance() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id }: { id: string }) =>
-      api.post<{ transaction: Transaction; payment: PaymentInit }>(
+      api.post<{ transactionId: string; amount: string; redirectUrl?: string; replayed: boolean }>(
         `/api/transactions/${id}/pay-balance`,
         {},
         { idempotencyKey: newIdempotencyKey() },
@@ -48,12 +48,12 @@ export function usePayBalance() {
   });
 }
 
-// POST /api/transactions/:id/confirm-receipt
+// POST /api/transactions/:id/confirm-receipt — likely flat Transaction
 export function useConfirmReceipt() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) =>
-      api.post<{ transaction: Transaction }>(`/api/transactions/${id}/confirm-receipt`, { note }),
+      api.post<Transaction>(`/api/transactions/${id}/confirm-receipt`, { note }),
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: KEYS.detail(v.id) });
       qc.invalidateQueries({ queryKey: ["transactions"] });
@@ -61,12 +61,12 @@ export function useConfirmReceipt() {
   });
 }
 
-// POST /api/transactions/:id/dispute
+// POST /api/transactions/:id/dispute — likely flat {id, transactionId, status}
 export function useOpenDispute() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, reason, evidence }: { id: string; reason: string; evidence?: string[] }) =>
-      api.post<{ dispute: Dispute; transaction: Transaction }>(`/api/transactions/${id}/dispute`, { reason, evidence }),
+      api.post<{ id: string; transactionId: string; status: string }>(`/api/transactions/${id}/dispute`, { reason, evidence }),
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: KEYS.detail(v.id) });
       qc.invalidateQueries({ queryKey: ["disputes"] });
@@ -92,22 +92,22 @@ export function useAdminTransactions(query: AdminTxnQuery = {}) {
   });
 }
 
-// POST /api/admin/transactions
+// POST /api/admin/transactions — BE returns flat Transaction
 export function useAdminCreateTransaction() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ offerId, finalPrice }: { offerId: string; finalPrice: string }) =>
-      api.post<{ transaction: Transaction }>("/api/admin/transactions", { offerId, finalPrice }),
+      api.post<Transaction>("/api/admin/transactions", { offerId, finalPrice }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["admin", "transactions"] }),
   });
 }
 
-// POST /api/admin/transactions/:id/run-payout
+// POST /api/admin/transactions/:id/run-payout — BE returns {ran: boolean, reason?: string}
 export function useRunPayout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id }: { id: string }) =>
-      api.post<{ transaction: Transaction }>(`/api/admin/transactions/${id}/run-payout`),
+      api.post<{ ran: boolean; reason?: string }>(`/api/admin/transactions/${id}/run-payout`),
     onSuccess: (_, v) => {
       qc.invalidateQueries({ queryKey: KEYS.detail(v.id) });
       qc.invalidateQueries({ queryKey: ["admin", "transactions"] });
