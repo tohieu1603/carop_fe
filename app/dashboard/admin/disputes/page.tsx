@@ -37,9 +37,9 @@ function Inner() {
         isLoading={list.isLoading}
         columns={[
           { key: "id", header: "ID", render: (r) => <span className="mono">{r.id}</span> },
-          { key: "txn", header: "Giao dịch", render: (r) => r.transactionId },
-          { key: "opener", header: "Người mở", render: (r) => r.openerId },
-          { key: "reason", header: "Lý do", render: (r) => <span style={{ fontSize: 12 }}>{r.reason.slice(0, 80)}…</span> },
+          { key: "txn", header: "Giao dịch", render: (r) => r.transaction ? `${r.transaction.listingId} (${r.transaction.status})` : r.transactionId },
+          { key: "opener", header: "Người mở", render: (r) => r.opener ? `${r.opener.fullName} (${r.opener.role})` : r.openerId },
+          { key: "reason", header: "Lý do", render: (r) => <span style={{ fontSize: 12 }}>{r.reason.slice(0, 80)}{r.reason.length > 80 ? "…" : ""}</span> },
           { key: "status", header: "Trạng thái", render: (r) => <StatusBadge value={r.status} /> },
           {
             key: "act",

@@ -9,6 +9,8 @@ import {
   useAdminListings,
   useApproveListing,
   useMarkListingSold,
+  useHideListing,
+  useUnhideListing,
 } from "@/hooks/api/listings";
 import { formatVNDShort } from "@/lib/format-bigint";
 import type { Severity } from "@/types/api";
@@ -28,6 +30,8 @@ function Inner() {
   const list = useAdminListings({ status: status || undefined, severity: severity || undefined, q: q || undefined, limit: 50 });
   const approve = useApproveListing();
   const sell = useMarkListingSold();
+  const hideListing = useHideListing();
+  const unhideListing = useUnhideListing();
   return (
     <>
       <PageHeader title="Quản lý tin đăng" />
@@ -62,6 +66,15 @@ function Inner() {
                     Duyệt
                   </button>
                 )}
+                {r.status === "HIDDEN" ? (
+                  <button className="btn btn-secondary btn-sm" onClick={() => unhideListing.mutate({ id: r.id })}>
+                    Hiện
+                  </button>
+                ) : r.status !== "SOLD" ? (
+                  <button className="btn btn-secondary btn-sm" onClick={() => hideListing.mutate({ id: r.id })}>
+                    Ẩn
+                  </button>
+                ) : null}
                 {r.status !== "SOLD" && r.status !== "HIDDEN" && (
                   <button
                     className="btn btn-secondary btn-sm"

@@ -36,7 +36,7 @@ function Inner() {
         isLoading={list.isLoading}
         columns={[
           { key: "id", header: "ID", render: (r) => <span className="mono">{r.id}</span> },
-          { key: "user", header: "User", render: (r) => r.userId },
+          { key: "user", header: "User", render: (r) => r.user ? `${r.user.fullName} (${r.user.phone})` : r.userId },
           { key: "front", header: "Ảnh trước", render: (r) => <code style={{ fontSize: 11 }}>{r.frontKey}</code> },
           { key: "selfie", header: "Selfie", render: (r) => <code style={{ fontSize: 11 }}>{r.selfieKey}</code> },
           { key: "status", header: "Trạng thái", render: (r) => <StatusBadge value={r.status} /> },

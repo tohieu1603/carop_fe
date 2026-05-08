@@ -2,6 +2,11 @@ export function formatVND(n: number): string {
   return n.toLocaleString("vi-VN") + "đ";
 }
 
+export function formatDate(s: string | undefined | null): string {
+  if (!s) return "—";
+  return new Date(s).toLocaleDateString("vi-VN");
+}
+
 export function formatVNDShort(n: number): string {
   if (n >= 1e9) return (n / 1e9).toFixed(2).replace(/\.?0+$/, "") + " tỷ";
   if (n >= 1e6) return (n / 1e6).toFixed(0) + " triệu";

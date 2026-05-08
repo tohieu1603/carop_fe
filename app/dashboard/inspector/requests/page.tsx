@@ -45,7 +45,7 @@ function Inner() {
         empty="Chưa có yêu cầu nào."
         columns={[
           { key: "id", header: "Mã", render: (r) => <span className="mono">{r.id}</span> },
-          { key: "listing", header: "Listing", render: (r) => r.listingId },
+          { key: "listing", header: "Listing", render: (r) => r.listing ? `${r.listing.brand} ${r.listing.model} ${r.listing.year} (${r.listing.location})` : r.listingId },
           { key: "status", header: "Trạng thái", render: (r) => <StatusBadge value={r.status} /> },
           { key: "sched", header: "Lịch", render: (r) => r.scheduledAt?.slice(0, 16).replace("T", " ") || "—" },
           {

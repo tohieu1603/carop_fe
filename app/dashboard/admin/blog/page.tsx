@@ -45,8 +45,12 @@ function Inner() {
                 <Link href={`/blog/${r.slug}`} className="btn btn-secondary btn-sm">
                   Xem
                 </Link>
+                <Link href={`/dashboard/admin/blog/edit/${r.id}`} className="btn btn-secondary btn-sm">
+                  Sửa
+                </Link>
                 <button
                   className="btn btn-secondary btn-sm"
+                  style={{ color: "var(--red-600)" }}
                   onClick={() => {
                     if (confirm(`Xóa "${r.title}"?`)) del.mutate({ id: r.id });
                   }}

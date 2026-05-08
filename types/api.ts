@@ -83,6 +83,12 @@ export interface KycRequest {
   reason?: string;
   createdAt: string;
   decidedAt?: string;
+  user?: {
+    id: string;
+    fullName: string;
+    phone: string;
+    role: Role;
+  };
 }
 
 export interface ListingImage {
@@ -127,15 +133,37 @@ export interface Listing {
   images?: ListingImage[];
   topOffer?: string;
   spread?: string;
+  // enriched fields (may appear in detail view)
+  isOwner?: boolean;
+  inspection?: {
+    score?: number;
+    approved?: boolean;
+    createdAt?: string;
+  };
+  seller?: {
+    type?: string;
+    ratingAvg?: number;
+    dealsCount?: number;
+  };
 }
 
 export interface InspectionRequest {
   id: string;
   listingId: string;
   inspectorId?: string;
+  isMine?: boolean;
   status: InspectionRequestStatus;
   scheduledAt?: string;
   createdAt: string;
+  listing?: {
+    id: string;
+    brand: string;
+    model: string;
+    year: number;
+    location: string;
+    severity: Severity;
+    status: ListingStatus;
+  };
 }
 
 export interface InspectionReport {
@@ -166,6 +194,12 @@ export interface Offer {
   status: OfferStatus;
   createdAt: string;
   decidedAt?: string;
+  buyer?: {
+    id: string;
+    fullName: string;
+    phone: string;
+    email?: string | null;
+  };
 }
 
 export interface SellerViewOffer {
@@ -217,6 +251,17 @@ export interface Dispute {
   rationale?: string;
   createdAt: string;
   resolvedAt?: string;
+  transaction?: {
+    id: string;
+    listingId: string;
+    finalPrice: string;
+    status: TxnStatus;
+  };
+  opener?: {
+    id: string;
+    fullName: string;
+    role: Role;
+  };
 }
 
 export interface Notification {

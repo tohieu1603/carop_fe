@@ -1,13 +1,20 @@
 "use client";
 import Link from "next/link";
-import { use } from "react";
-import { notFound } from "next/navigation";
+import { use, useState } from "react";
+import { notFound, useRouter } from "next/navigation";
 import { useListing } from "@/hooks/api/listings";
+import { useCreateDeposit } from "@/hooks/api/deposits";
+import { useAuth } from "@/lib/auth";
 import { formatVND } from "@/lib/format";
+import { ApiError } from "@/lib/api/client";
 
 export default function CheckoutPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { data, isLoading, error } = useListing(id);
+  const createDeposit = useCreateDeposit();
+  const user = useAuth((s) => s.user);
+  const router = useRouter();
+  const [apiError, setApiError] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -25,6 +32,25 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
   const listPrice = Number(car.listPrice);
   const deposit = Math.round(listPrice * 0.01);
   const title = `${car.brand} ${car.model} ${car.year}`;
+
+  const handleDeposit = async () => {
+    if (!user) {
+      router.push(`/login?next=/checkout/${id}`);
+      return;
+    }
+    setApiError(null);
+    try {
+      const res = await createDeposit.mutateAsync({ listingId: car.id });
+      if (res.payment.payUrl) {
+        window.location.href = res.payment.payUrl;
+      } else {
+        router.push("/dashboard/deposits");
+      }
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : "Lỗi đặt cọc";
+      setApiError(msg);
+    }
+  };
 
   return (
     <main className="container" style={{ padding: "32px 0", maxWidth: 720 }}>
@@ -50,7 +76,28 @@ export default function CheckoutPage({ params }: { params: Promise<{ id: string 
         </div>
       </div>
 
-      <button className="btn btn-primary btn-lg" style={{ marginTop: 20 }}>Thanh toán đặt cọc</button>
+      {apiError && (
+        <div style={{ color: "var(--red-600)", fontSize: 14, marginTop: 12, padding: "12px 16px", background: "var(--red-100)", borderRadius: 8 }}>
+          {apiError}
+        </div>
+      )}
+
+      {!user && (
+        <div style={{ color: "var(--ink-500)", fontSize: 14, marginTop: 12 }}>
+          Bạn cần{" "}
+          <Link href={`/login?next=/checkout/${id}`} style={{ color: "var(--green-700)" }}>đăng nhập</Link>
+          {" "}để đặt cọc.
+        </div>
+      )}
+
+      <button
+        className="btn btn-primary btn-lg"
+        style={{ marginTop: 20 }}
+        onClick={handleDeposit}
+        disabled={createDeposit.isPending || !user}
+      >
+        {createDeposit.isPending ? "Đang xử lý…" : "Thanh toán đặt cọc"}
+      </button>
     </main>
   );
 }

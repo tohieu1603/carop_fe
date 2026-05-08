@@ -12,9 +12,8 @@ export interface StatsSummary {
   gmvRealized: string;
 }
 
-export interface FunnelData {
-  steps: Array<{ name: string; count: number }>;
-}
+export type FunnelStep = { name: string; count: number };
+export type FunnelData = FunnelStep[];
 
 // GET /api/admin/stats/summary
 export function useAdminSummary(range: "7d" | "30d" | "90d" = "30d") {

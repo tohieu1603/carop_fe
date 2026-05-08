@@ -42,11 +42,11 @@ function Inner() {
       <div className="card" style={{ padding: 16, marginTop: 8 }}>
         {funnel.isLoading ? (
           <div style={{ color: "var(--ink-500)" }}>Đang tải…</div>
-        ) : !funnel.data?.steps?.length ? (
+        ) : !funnel.data?.length ? (
           <div style={{ color: "var(--ink-500)" }}>Chưa có dữ liệu.</div>
         ) : (
           <ol style={{ display: "grid", gap: 8, margin: 0, paddingLeft: 20 }}>
-            {funnel.data.steps.map((s, i) => (
+            {funnel.data.map((s, i) => (
               <li key={i} style={{ display: "flex", justifyContent: "space-between", fontSize: 14 }}>
                 <span>{s.name}</span>
                 <span className="mono">{s.count.toLocaleString("vi-VN")}</span>

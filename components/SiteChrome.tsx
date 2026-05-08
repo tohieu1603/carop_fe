@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon } from "./Icon";
-import { useAppStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 const NAV = [
   { href: "/", label: "Trang chủ" },
@@ -13,12 +13,12 @@ const NAV = [
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const user = useAppStore((s) => s.user);
+  const user = useAuth((s) => s.user);
 
   return (
     <header style={{ position: "sticky", top: 0, zIndex: 50, background: "white", borderBottom: "1px solid var(--border)" }}>
       <div className="container" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px" }}>
-        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 18, letterSpacing: "-0.02em" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 700, fontSize: 18, letterSpacing: "-0.02em", textDecoration: "none", color: "inherit" }}>
           <span style={{ width: 28, height: 28, borderRadius: 8, background: "var(--green-700)", color: "white", display: "grid", placeItems: "center" }}><Icon.Droplet size={16}/></span>
           xengap<span style={{ color: "var(--green-700)" }}>.vn</span>
         </Link>
@@ -31,6 +31,7 @@ export function SiteHeader() {
                   padding: "8px 14px", borderRadius: 8, fontSize: 14, fontWeight: 500,
                   background: active ? "var(--green-50)" : "transparent",
                   color: active ? "var(--green-700)" : "var(--ink-700)",
+                  textDecoration: "none",
                 }}>
                 {n.label}
               </Link>
@@ -40,8 +41,10 @@ export function SiteHeader() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {user ? (
             <Link href="/dashboard" className="btn btn-secondary btn-sm" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <span style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--green-100)", color: "var(--green-700)", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700 }}>{user.initials}</span>
-              {user.name}
+              <span style={{ width: 26, height: 26, borderRadius: "50%", background: "var(--green-100)", color: "var(--green-700)", display: "grid", placeItems: "center", fontSize: 11, fontWeight: 700 }}>
+                {user.fullName.slice(0, 2).toUpperCase()}
+              </span>
+              {user.fullName.split(" ").slice(-1)[0]}
             </Link>
           ) : (
             <>

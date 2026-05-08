@@ -1,23 +1,56 @@
 "use client";
 import { useState } from "react";
 import { useAppStore } from "@/lib/store";
+import { useCreateOffer } from "@/hooks/api/offers";
+import { useAuth } from "@/lib/auth";
 import { formatVNDShort } from "@/lib/format";
 import { Icon } from "./Icon";
 import { CarImage } from "./CarCard";
+import { ApiError } from "@/lib/api/client";
 
 export function OfferModal() {
   const car = useAppStore((s) => s.offerCar);
   const close = useAppStore((s) => s.closeOfferModal);
+  const user = useAuth((s) => s.user);
+  const createOffer = useCreateOffer();
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
+  const [submittedOfferId, setSubmittedOfferId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   if (!car) return null;
   const offer = parseInt(amount.replace(/\D/g, "")) || 0;
-  const deposit = Math.round(offer * 0.01);
   const formatNumber = (n: number) => n.toLocaleString("vi-VN");
 
-  const onClose = () => { close(); setStep(1); setAmount(""); setMessage(""); };
+  const onClose = () => {
+    close();
+    setStep(1);
+    setAmount("");
+    setMessage("");
+    setSubmittedOfferId(null);
+    setApiError(null);
+  };
+
+  const handleSubmitOffer = async () => {
+    if (!user) {
+      setApiError("Bạn cần đăng nhập để gửi offer.");
+      return;
+    }
+    setApiError(null);
+    try {
+      const res = await createOffer.mutateAsync({
+        listingId: car.id,
+        amount: offer,
+        message: message || undefined,
+      });
+      setSubmittedOfferId(res.offer.id);
+      setStep(3);
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : "Lỗi gửi offer";
+      setApiError(msg);
+    }
+  };
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "oklch(0 0 0 / 0.5)", zIndex: 200, display: "grid", placeItems: "center", padding: 20 }}>
@@ -25,9 +58,9 @@ export function OfferModal() {
         {/* Header */}
         <div style={{ padding: "20px 24px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div>
-            <div style={{ fontSize: 11, color: "var(--green-700)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>Bước {step}/3</div>
+            <div style={{ fontSize: 11, color: "var(--green-700)", fontWeight: 700, letterSpacing: "0.05em", textTransform: "uppercase" }}>Bước {step}/2</div>
             <h2 style={{ margin: "4px 0 0", fontSize: 20, fontWeight: 700 }}>
-              {step === 1 ? "Gửi offer mua xe" : step === 2 ? "Đặt cọc giữ chỗ" : "Hoàn tất"}
+              {step === 1 ? "Gửi offer mua xe" : step === 2 ? "Xác nhận offer" : "Hoàn tất"}
             </h2>
           </div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--ink-500)" }}><Icon.X size={20}/></button>
@@ -81,9 +114,14 @@ export function OfferModal() {
                   <div>Người bán không thấy thông tin của bạn. xengap.vn sẽ kết nối hai bên khi offer được chấp nhận.</div>
                 </div>
               </div>
-              <button onClick={() => setStep(2)} disabled={offer < 1e7}
-                className="btn btn-primary btn-lg" style={{ width: "100%", opacity: offer < 1e7 ? 0.5 : 1 }}>
-                Tiếp tục — Đặt cọc 1% giữ chỗ
+              {!user && (
+                <div style={{ color: "var(--red-600)", fontSize: 13, marginBottom: 12 }}>
+                  Bạn cần <a href="/login" style={{ color: "var(--green-700)" }}>đăng nhập</a> để gửi offer.
+                </div>
+              )}
+              <button onClick={() => setStep(2)} disabled={offer < 1e7 || !user}
+                className="btn btn-primary btn-lg" style={{ width: "100%", opacity: (offer < 1e7 || !user) ? 0.5 : 1 }}>
+                Tiếp tục — Xem lại offer
               </button>
             </>
           )}
@@ -95,29 +133,34 @@ export function OfferModal() {
                   <span style={{ color: "var(--ink-500)" }}>Offer của bạn</span>
                   <span className="mono" style={{ fontWeight: 600 }}>{formatNumber(offer)}đ</span>
                 </div>
-                <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", fontSize: 13, borderTop: "1px solid var(--border)", marginTop: 6, paddingTop: 12 }}>
-                  <span style={{ fontWeight: 600 }}>Tiền cọc giữ chỗ (1%)</span>
-                  <span className="mono" style={{ fontWeight: 700, color: "var(--green-700)" }}>{formatNumber(deposit)}đ</span>
-                </div>
+                {message && (
+                  <div style={{ padding: "6px 0", fontSize: 13, borderTop: "1px solid var(--border)", marginTop: 6 }}>
+                    <span style={{ color: "var(--ink-500)" }}>Lời nhắn: </span>{message}
+                  </div>
+                )}
               </div>
               <div style={{ background: "var(--bg-soft)", borderRadius: 10, padding: 16, fontSize: 12, color: "var(--ink-700)", marginBottom: 16 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Cọc được hoàn 100% nếu:</div>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Lưu ý:</div>
                 <div style={{ paddingLeft: 16 }}>
-                  <div>• Người bán từ chối offer</div>
-                  <div>• Báo cáo kiểm định khác mô tả</div>
-                  <div>• Hủy giao dịch trong 48 giờ</div>
+                  <div>• Offer sẽ được gửi cho người bán</div>
+                  <div>• xengap.vn sẽ thông báo kết quả trong 24 giờ</div>
+                  <div>• Bạn có thể rút offer trước khi được chấp nhận</div>
                 </div>
               </div>
-              <label className="label">Phương thức thanh toán</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
-                {["VietQR", "Thẻ NH", "VNPay"].map((m, i) => (
-                  <button key={m} className="btn btn-secondary btn-sm" style={i === 0 ? { borderColor: "var(--green-700)", color: "var(--green-700)" } : {}}>{m}</button>
-                ))}
-              </div>
+              {apiError && (
+                <div style={{ color: "var(--red-600)", fontSize: 13, marginBottom: 12, padding: "8px 12px", background: "var(--red-100)", borderRadius: 8 }}>
+                  {apiError}
+                </div>
+              )}
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={() => setStep(1)} className="btn btn-secondary btn-lg" style={{ flex: 1 }}>Quay lại</button>
-                <button onClick={() => setStep(3)} className="btn btn-primary btn-lg" style={{ flex: 2 }}>
-                  Đặt cọc {formatNumber(deposit)}đ
+                <button
+                  onClick={handleSubmitOffer}
+                  disabled={createOffer.isPending}
+                  className="btn btn-primary btn-lg"
+                  style={{ flex: 2 }}
+                >
+                  {createOffer.isPending ? "Đang gửi…" : `Gửi offer ${formatNumber(offer)}đ`}
                 </button>
               </div>
             </>
@@ -132,10 +175,12 @@ export function OfferModal() {
               <p style={{ fontSize: 13, color: "var(--ink-500)", margin: "0 0 24px" }}>
                 xengap.vn sẽ liên hệ trong vòng <b style={{ color: "var(--green-700)" }}>24 giờ</b> sau khi người bán phản hồi.
               </p>
-              <div style={{ background: "var(--bg-soft)", borderRadius: 10, padding: 16, textAlign: "left", marginBottom: 20 }}>
-                <div style={{ fontSize: 11, color: "var(--ink-500)" }}>Mã offer</div>
-                <div className="mono" style={{ fontSize: 16, fontWeight: 700 }}>OF-2024-{Math.floor(Math.random() * 9000) + 1000}</div>
-              </div>
+              {submittedOfferId && (
+                <div style={{ background: "var(--bg-soft)", borderRadius: 10, padding: 16, textAlign: "left", marginBottom: 20 }}>
+                  <div style={{ fontSize: 11, color: "var(--ink-500)" }}>Mã offer</div>
+                  <div className="mono" style={{ fontSize: 16, fontWeight: 700 }}>{submittedOfferId}</div>
+                </div>
+              )}
               <button onClick={onClose} className="btn btn-primary btn-lg" style={{ width: "100%" }}>Đóng</button>
             </div>
           )}

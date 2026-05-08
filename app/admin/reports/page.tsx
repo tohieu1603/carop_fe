@@ -1,6 +1,6 @@
 "use client";
 import { useAdminSummary, useAdminFunnel } from "@/hooks/api/admin";
-import { formatVNDShort } from "@/lib/format";
+import { formatVNDShort } from "@/lib/format-bigint";
 
 // Use a fixed recent 30-day range for funnel
 const today = new Date();
@@ -34,7 +34,7 @@ export default function AdminReportsPage() {
         <div className="card" style={{ padding: 20 }}>
           <div style={{ fontSize: 12, color: "var(--ink-500)" }}>GMV tiềm năng</div>
           <div className="mono" style={{ fontSize: 28, fontWeight: 700, marginTop: 8 }}>
-            {summaryLoading ? "..." : formatVNDShort(Number(summary?.gmvPotential ?? 0))}
+            {summaryLoading ? "..." : formatVNDShort(summary?.gmvPotential ?? "0")}
           </div>
         </div>
       </div>
@@ -42,9 +42,9 @@ export default function AdminReportsPage() {
       {/* Funnel */}
       <h2 style={{ fontSize: 18, fontWeight: 700, marginTop: 40, marginBottom: 16 }}>Phễu chuyển đổi (30 ngày)</h2>
       {funnelLoading && <div style={{ color: "var(--ink-500)", fontSize: 14 }}>Đang tải...</div>}
-      {funnel?.steps && funnel.steps.length > 0 && (
+      {funnel && funnel.length > 0 && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
-          {funnel.steps.map(step => (
+          {funnel.map(step => (
             <div key={step.name} className="card" style={{ padding: 16 }}>
               <div style={{ fontSize: 11, color: "var(--ink-500)", textTransform: "uppercase", letterSpacing: "0.5px" }}>{step.name}</div>
               <div className="mono" style={{ fontSize: 24, fontWeight: 700, marginTop: 6 }}>{step.count}</div>
