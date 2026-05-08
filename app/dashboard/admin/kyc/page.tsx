@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { DataTable, StatusBadge } from "@/components/dashboard/DataTable";
 import { RequireRole } from "@/components/RequireRole";
 import { useAdminKyc, useDecideKyc } from "@/hooks/api/users";
+import { ApiError } from "@/lib/api/client";
 import type { KycRequestStatus } from "@/types/api";
 
 export default function AdminKycPage() {
@@ -46,14 +47,38 @@ function Inner() {
             render: (r) =>
               r.status === "PENDING" ? (
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => decide.mutate({ id: r.id, decision: "APPROVE" })}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    disabled={decide.isPending}
+                    onClick={() =>
+                      decide.mutate(
+                        { id: r.id, decision: "APPROVE" },
+                        {
+                          onSuccess: () => alert(`Đã duyệt KYC #${r.id}`),
+                          onError: (e) => alert(e instanceof ApiError ? `Duyệt KYC: ${e.message}` : "Lỗi"),
+                        },
+                      )
+                    }
+                  >
                     Duyệt
                   </button>
                   <button
                     className="btn btn-secondary btn-sm"
+                    disabled={decide.isPending}
                     onClick={() => {
-                      const reason = prompt("Lý do từ chối (10..500):");
-                      if (reason && reason.length >= 10) decide.mutate({ id: r.id, decision: "REJECT", reason });
+                      const reason = prompt("Lý do từ chối (10..500 ký tự):");
+                      if (!reason) return;
+                      if (reason.length < 10) {
+                        alert("Lý do phải có ít nhất 10 ký tự.");
+                        return;
+                      }
+                      decide.mutate(
+                        { id: r.id, decision: "REJECT", reason },
+                        {
+                          onSuccess: () => alert(`Đã từ chối KYC #${r.id}`),
+                          onError: (e) => alert(e instanceof ApiError ? `Từ chối KYC: ${e.message}` : "Lỗi"),
+                        },
+                      );
                     }}
                   >
                     Từ chối

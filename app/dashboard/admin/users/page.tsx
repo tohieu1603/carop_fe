@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/dashboard/PageHeader";
 import { DataTable, StatusBadge } from "@/components/dashboard/DataTable";
 import { RequireRole } from "@/components/RequireRole";
 import { useAdminUsers, useBlockUser, useUnblockUser } from "@/hooks/api/users";
+import { ApiError } from "@/lib/api/client";
 import type { Role, UserStatus } from "@/types/api";
 
 export default function AdminUsersPage() {
@@ -58,22 +59,36 @@ function Inner() {
           {
             key: "act",
             header: "",
-            render: (u) =>
-              u.status === "BLOCKED" ? (
-                <button className="btn btn-secondary btn-sm" onClick={() => unblock.mutate({ id: u.id })}>
+            render: (u) => {
+              const onErr = (label: string) => (e: unknown) => {
+                alert(e instanceof ApiError ? `${label}: ${e.message}` : `${label}: lỗi`);
+              };
+              return u.status === "BLOCKED" ? (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  disabled={unblock.isPending}
+                  onClick={() => unblock.mutate({ id: u.id }, { onError: onErr("Mở khóa") })}
+                >
                   Mở khóa
                 </button>
               ) : (
                 <button
                   className="btn btn-secondary btn-sm"
+                  disabled={block.isPending}
                   onClick={() => {
                     const r = prompt("Lý do khóa (tối thiểu 10 ký tự):");
-                    if (r && r.length >= 10) block.mutate({ id: u.id, reason: r });
+                    if (!r) return;
+                    if (r.length < 10) {
+                      alert("Lý do phải có ít nhất 10 ký tự.");
+                      return;
+                    }
+                    block.mutate({ id: u.id, reason: r }, { onError: onErr("Khóa") });
                   }}
                 >
                   Khóa
                 </button>
-              ),
+              );
+            },
           },
         ]}
       />

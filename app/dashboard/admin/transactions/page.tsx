@@ -7,6 +7,7 @@ import { DataTable, StatusBadge } from "@/components/dashboard/DataTable";
 import { RequireRole } from "@/components/RequireRole";
 import { useAdminTransactions, useRunPayout } from "@/hooks/api/transactions";
 import { formatVNDShort } from "@/lib/format-bigint";
+import { ApiError } from "@/lib/api/client";
 import type { TxnStatus } from "@/types/api";
 
 export default function AdminTxnsPage() {
@@ -52,7 +53,20 @@ function Inner() {
             render: (r) => (
               <div style={{ display: "flex", gap: 6 }}>
                 {r.status === "RECEIPT_CONFIRMED" && (
-                  <button className="btn btn-primary btn-sm" onClick={() => payout.mutate({ id: r.id })}>
+                  <button
+                    className="btn btn-primary btn-sm"
+                    disabled={payout.isPending}
+                    onClick={() => {
+                      if (!confirm(`Trigger payout cho txn ${r.id}?`)) return;
+                      payout.mutate(
+                        { id: r.id },
+                        {
+                          onSuccess: () => alert(`Payout OK cho ${r.id}`),
+                          onError: (e) => alert(e instanceof ApiError ? `Payout: ${e.message}` : "Payout: lỗi"),
+                        },
+                      );
+                    }}
+                  >
                     Payout
                   </button>
                 )}
