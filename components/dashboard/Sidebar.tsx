@@ -39,7 +39,8 @@ const NAV: { section: string; items: NavItem[] }[] = [
   {
     section: "Kiểm định",
     items: [
-      { href: "/dashboard/inspector/requests", label: "Yêu cầu kiểm định", roles: ["INSPECTOR", "ADMIN", "SUPER_ADMIN"] },
+      { href: "/dashboard/inspector/requests", label: "Yeu cau kiem dinh", roles: ["INSPECTOR", "ADMIN", "SUPER_ADMIN"] },
+      { href: "/inspector/queue", label: "Hang doi (moi)", roles: ["INSPECTOR", "ADMIN", "SUPER_ADMIN"] },
     ],
   },
   {

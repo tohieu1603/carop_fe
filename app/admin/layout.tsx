@@ -16,8 +16,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin/escrow" style={navStyle}>Bảo lãnh</Link>
 
           <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", padding: "4px 12px", marginTop: 12 }}>Duyệt</div>
-          <Link href="/dashboard/admin/kyc" style={navStyle}>Duyệt KYC</Link>
-          <Link href="/dashboard/admin/disputes" style={navStyle}>Khiếu nại</Link>
+          <Link href="/admin/kyc" style={navStyle}>Duyet KYC</Link>
+          <Link href="/admin/disputes" style={navStyle}>Khieu nai</Link>
           <Link href="/dashboard/admin/blog" style={navStyle}>Bài viết</Link>
           <Link href="/dashboard/admin/transactions" style={navStyle}>Giao dịch</Link>
         </nav>

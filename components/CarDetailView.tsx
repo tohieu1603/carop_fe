@@ -2,17 +2,19 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAppStore } from "@/lib/store";
-import { formatVND, formatVNDShort, SEVERITY_LABELS } from "@/lib/format";
+import { formatVND, formatVNDShort as formatVNDShortNum, SEVERITY_LABELS } from "@/lib/format";
+import { formatVNDShort } from "@/lib/format-bigint";
 import { Icon } from "@/components/Icon";
 import { CarImage } from "@/components/CarCard";
 import { VINHistory, PriceComparison } from "@/components/CarHistory";
 import { SiteHeader, SiteFooter } from "@/components/SiteChrome";
-import type { Listing } from "@/types/api";
+import { useListings } from "@/hooks/api/listings";
+import type { InspectionSummary, Listing } from "@/types/api";
 
-interface Props { car: Listing; offerCount?: number; }
+interface Props { car: Listing; offerCount?: number; inspectionData?: InspectionSummary; }
 
-export function CarDetailView({ car, offerCount = 0 }: Props) {
-  const [tab, setTab] = useState<"damage" | "specs" | "vin" | "compare">("damage");
+export function CarDetailView({ car, offerCount = 0, inspectionData }: Props) {
+  const [tab, setTab] = useState<"damage" | "specs" | "vin" | "compare" | "inspection">("damage");
   const openOffer = useAppStore((s) => s.openOfferModal);
   const sev = SEVERITY_LABELS[car.severity];
   const listPrice = Number(car.listPrice);
@@ -41,15 +43,28 @@ export function CarDetailView({ car, offerCount = 0 }: Props) {
             </div>
             <div className="mono" style={{ fontSize: 11, color: "var(--ink-500)", marginBottom: 24 }}>{car.id} · VIN {car.vin}</div>
 
+            {/* Interest + views */}
+            <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 13, color: "var(--ink-600)" }}>
+              <span><b>{car.offerCount ?? offerCount}</b> nguoi quan tam</span>
+              <span>·</span>
+              <span><b>{car.views?.toLocaleString("vi-VN") ?? 0}</b> luot xem</span>
+            </div>
+
+            {/* Image gallery */}
+            {car.images && car.images.length > 1 && (
+              <ImageGallery images={car.images} />
+            )}
+
             {/* Tabs */}
-            <div style={{ display: "flex", gap: 4, padding: 4, background: "var(--bg-soft)", borderRadius: 10, marginBottom: 16, width: "fit-content" }}>
+            <div style={{ display: "flex", gap: 4, padding: 4, background: "var(--bg-soft)", borderRadius: 10, marginBottom: 16, width: "fit-content", flexWrap: "wrap" }}>
               {[
-                { id: "damage" as const, l: "Tình trạng" },
-                { id: "specs" as const, l: "Thông số" },
-                { id: "vin" as const, l: "Lịch sử VIN" },
-                { id: "compare" as const, l: "So sánh giá" },
+                { id: "damage" as const, l: "Tinh trang" },
+                { id: "specs" as const, l: "Thong so" },
+                ...(inspectionData ? [{ id: "inspection" as const, l: "Kiem dinh" }] : []),
+                { id: "vin" as const, l: "Lich su VIN" },
+                { id: "compare" as const, l: "So sanh gia" },
               ].map((t) => (
-                <button key={t.id} onClick={() => setTab(t.id)} style={{
+                <button key={t.id} onClick={() => setTab(t.id as typeof tab)} style={{
                   padding: "8px 16px", borderRadius: 6, fontSize: 13, fontWeight: 600,
                   background: tab === t.id ? "white" : "transparent",
                   color: tab === t.id ? "var(--ink-900)" : "var(--ink-500)",
@@ -94,6 +109,47 @@ export function CarDetailView({ car, offerCount = 0 }: Props) {
               </div>
             )}
 
+            {tab === "inspection" && inspectionData && (
+              <div className="card" style={{ padding: 20 }}>
+                <h3 style={{ margin: "0 0 14px", fontSize: 15, fontWeight: 700 }}>Ket qua kiem dinh</h3>
+                <div style={{ display: "flex", gap: 20, alignItems: "center", marginBottom: 14 }}>
+                  {inspectionData.score !== undefined && (
+                    <div style={{ textAlign: "center" }}>
+                      <div className="mono" style={{ fontSize: 40, fontWeight: 800, color: inspectionData.score >= 70 ? "var(--green-700)" : inspectionData.score >= 50 ? "var(--amber-600)" : "var(--red-600)" }}>
+                        {inspectionData.score}
+                      </div>
+                      <div style={{ fontSize: 11, color: "var(--ink-500)" }}>Diem / 100</div>
+                    </div>
+                  )}
+                  {inspectionData.approved !== undefined && (
+                    <span className={`badge badge-${inspectionData.approved ? "green" : "red"}`}>
+                      {inspectionData.approved ? "Da phe duyet" : "Khong duyet"}
+                    </span>
+                  )}
+                </div>
+                {inspectionData.repairs && inspectionData.repairs.length > 0 && (
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ fontSize: 12, color: "var(--ink-500)", marginBottom: 6 }}>Da sua chua</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                      {inspectionData.repairs.map((r) => (
+                        <span key={r} style={{ background: "var(--green-50)", color: "var(--green-700)", fontSize: 12, padding: "3px 8px", borderRadius: 99 }}>{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {inspectionData.damage && Object.keys(inspectionData.damage).length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 12, color: "var(--ink-500)", marginBottom: 6 }}>Tinh trang hu hong</div>
+                    {Object.entries(inspectionData.damage as Record<string, string>).map(([k, v]) => (
+                      <div key={k} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)", fontSize: 14 }}>
+                        <span style={{ color: "var(--ink-500)" }}>{k}</span>
+                        <span>{String(v)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             {tab === "vin" && <VINHistory car={car}/>}
             {tab === "compare" && <PriceComparison car={car}/>}
           </div>
@@ -144,8 +200,88 @@ export function CarDetailView({ car, offerCount = 0 }: Props) {
             </div>
           </aside>
         </div>
+        {/* Similar cars */}
+        <SimilarCars brand={car.brand} severity={car.severity} excludeId={car.id} />
       </main>
       <SiteFooter />
     </>
+  );
+}
+
+function ImageGallery({ images }: { images: Array<{ id: string; url?: string; s3Key: string; position: number }> }) {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const sorted = [...images].sort((a, b) => a.position - b.position);
+  const active = sorted[activeIdx];
+  return (
+    <div style={{ marginBottom: 24 }}>
+      {/* Main image */}
+      <div style={{ aspectRatio: "16/9", borderRadius: 12, overflow: "hidden", background: "var(--bg-soft)", marginBottom: 8 }}>
+        {active?.url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={active.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ink-400)", fontSize: 12 }}>
+            {active?.s3Key ?? "No image"}
+          </div>
+        )}
+      </div>
+      {/* Thumbnails */}
+      {sorted.length > 1 && (
+        <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
+          {sorted.map((img, i) => (
+            <button
+              key={img.id}
+              onClick={() => setActiveIdx(i)}
+              style={{
+                flexShrink: 0, width: 72, height: 52, borderRadius: 6, overflow: "hidden",
+                border: i === activeIdx ? "2px solid var(--green-600)" : "2px solid transparent",
+                background: "var(--bg-soft)", padding: 0, cursor: "pointer",
+              }}
+            >
+              {img.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={img.url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "var(--ink-400)" }}>
+                  {i + 1}
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SimilarCars({ brand, severity, excludeId }: { brand: string; severity: string; excludeId: string }) {
+  const { data } = useListings({ brand, severity: severity as "low" | "medium" | "high", limit: 6 });
+  const similar = (data?.items ?? []).filter((l) => l.id !== excludeId).slice(0, 4);
+  if (similar.length === 0) return null;
+  return (
+    <div style={{ marginTop: 40 }}>
+      <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>Xe tuong tu</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16 }}>
+        {similar.map((car) => (
+          <Link key={car.id} href={`/cars/${car.id}`} className="card" style={{ textDecoration: "none", color: "inherit", overflow: "hidden" }}>
+            <div style={{ height: 130, background: "linear-gradient(135deg, var(--green-200), var(--green-500))" }}>
+              {car.images?.[0]?.url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={car.images[0].url} alt={car.brand} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              )}
+            </div>
+            <div style={{ padding: 12 }}>
+              <div style={{ fontWeight: 700, fontSize: 14 }}>{car.brand} {car.model} {car.year}</div>
+              <div className="mono" style={{ fontSize: 15, fontWeight: 700, color: "var(--green-700)", marginTop: 3 }}>
+                {formatVNDShort(car.listPrice)}
+              </div>
+              <div style={{ fontSize: 12, color: "var(--ink-500)", marginTop: 3 }}>
+                {car.mileage.toLocaleString("vi-VN")} km · {car.location}
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

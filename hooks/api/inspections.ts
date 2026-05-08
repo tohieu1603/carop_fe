@@ -21,17 +21,17 @@ export function useInspectorRequests(query: InspectorRequestsQuery = {}) {
   });
 }
 
-// POST /api/inspector/requests/:id/claim
+// POST /api/inspector/requests/:id/claim — returns flat { id, status }
 export function useClaimInspection() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id }: { id: string }) =>
-      api.post<{ request: InspectionRequest }>(`/api/inspector/requests/${id}/claim`),
+      api.post<{ id: string; status: string }>(`/api/inspector/requests/${id}/claim`),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["inspector", "requests"] }),
   });
 }
 
-// POST /api/inspector/requests/:id/report
+// POST /api/inspector/requests/:id/report — returns flat { id, requestId, listingId, approved, score, listingApplied }
 export function useSubmitInspectionReport() {
   const qc = useQueryClient();
   return useMutation({
@@ -49,10 +49,14 @@ export function useSubmitInspectionReport() {
         evidenceKeys?: string[];
       };
     }) =>
-      api.post<{ report: InspectionReport; request: InspectionRequest; listing: Listing }>(
-        `/api/inspector/requests/${id}/report`,
-        body,
-      ),
+      api.post<{
+        id: string;
+        requestId: string;
+        listingId: string;
+        approved: boolean;
+        score: number;
+        listingApplied: boolean;
+      }>(`/api/inspector/requests/${id}/report`, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["inspector"] });
       qc.invalidateQueries({ queryKey: ["listings"] });
